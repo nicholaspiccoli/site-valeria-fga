@@ -15,7 +15,15 @@
   for(const img of document.querySelectorAll('img[data-b64-src]')){
     const key=img.dataset.b64Src.split('/').pop().replace('.b64','');
     const files=manifest[key]||[];
-    try{ const parts=await Promise.all(files.map(async f=>{const r=await fetch('assets/'+f,{cache:'force-cache'});if(!r.ok)throw new Error(String(r.status));return (await r.text()).trim();})); img.src='data:image/webp;base64,'+parts.join(''); }
-    catch(e){ console.error('Falha ao carregar imagem',key,e); }
+    try{
+      const parts=await Promise.all(files.map(async (f,i)=>{
+        const r=await fetch('assets/'+f,{cache:'force-cache'});
+        if(!r.ok)throw new Error(String(r.status));
+        let text=(await r.text()).trim();
+        if(i<files.length-1 && text.length>12000) text=text.slice(0,12000);
+        return text;
+      }));
+      img.src='data:image/webp;base64,'+parts.join('');
+    } catch(e){ console.error('Falha ao carregar imagem',key,e); }
   }
 })();
